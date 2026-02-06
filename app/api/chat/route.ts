@@ -9,7 +9,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // POST /api/chat
-// Send a message to Serene and get a response
+// Send a message to Anchor and get a response
 // Also handles summary storage every 5 messages or ~5 minutes
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 async function handleChatRequest(request: NextRequest) {
   try {
     console.log('[Chat API Handler] Starting...');
-    const { message, moodContext, session_id } = await request.json();
+    const { message, domainContext, session_id } = await request.json();
     console.log('[Chat API Handler] Received message:', message.substring(0, 50));
     console.log('[Chat API Handler] Session ID from client:', session_id || 'none');
 
@@ -97,7 +97,7 @@ async function handleChatRequest(request: NextRequest) {
     // If no valid session from client, create one
     // (Page reload clears session_id, so this creates new session on reload)
     if (!session) {
-      session = await createSession(authedSupabase, userId, moodContext || null, nowIso);
+      session = await createSession(authedSupabase, userId, domainContext || null, nowIso);
       console.log('[Chat API Handler] Created new session:', session?.id);
     }
 
@@ -116,7 +116,7 @@ async function handleChatRequest(request: NextRequest) {
 
     // Try to get AI response
     console.log('[Chat API Handler] Calling AI...');
-    const aiResponse = await callSereneAI(message, moodContext);
+    const aiResponse = await callSereneAI(message, domainContext);
     console.log('[Chat API Handler] AI response:', aiResponse.success ? 'success' : 'failed');
 
     let assistantMessage = '';
@@ -128,7 +128,7 @@ async function handleChatRequest(request: NextRequest) {
     } else {
       // AI unavailable - use offline fallback
       useFallback = true;
-      const microSuggestion = getMicroSuggestion(moodContext || null);
+      const microSuggestion = getMicroSuggestion(domainContext || null);
       assistantMessage = `${getOfflineMessage()}\n\n💡 ${microSuggestion.text}`;
       console.log('[Chat API] Using offline fallback - AI service unavailable');
     }
@@ -177,7 +177,7 @@ async function handleChatRequest(request: NextRequest) {
       console.log('[Chat API Handler] Updating summary...');
       const summaryText = await buildSessionSummary({
         messageCount: nextMessageCount,
-        moodAtStart: session.mood_at_start,
+        domainContext: session.domain_context,
         hasRiskFlag,
         messages: newMessages,
       });
@@ -271,10 +271,10 @@ async function closeStaleSessions(
 async function createSession(
   client: any,
   userId: string,
-  moodAtStart: string | null,
+  domainContext: string | null,
   nowIso: string
 ) {
-  const sessionTitle = generateSessionTitle(nowIso, moodAtStart);
+  const sessionTitle = generateSessionTitle(nowIso, domainContext);
   
   const { data, error } = await client
     .from('chat_sessions')
@@ -285,7 +285,8 @@ async function createSession(
       message_count: 0,
       summary_text: '',
       session_title: sessionTitle,
-      mood_at_start: moodAtStart,
+      mood_at_start: null,
+      domain_context: domainContext,
       messages_json: [],
       has_risk_flag: false,
       created_at: nowIso,
@@ -323,11 +324,11 @@ async function updateSessionActivity(
 
 async function buildSessionSummary(input: {
   messageCount: number;
-  moodAtStart: string | null;
+  domainContext: string | null;
   hasRiskFlag: boolean;
   messages: any[];
 }) {
-  const { messageCount, moodAtStart, hasRiskFlag, messages } = input;
+  const { messageCount, domainContext, hasRiskFlag, messages } = input;
 
   // If no messages, return placeholder
   if (!messages || messages.length === 0) {
@@ -352,7 +353,7 @@ async function buildSessionSummary(input: {
     // Use AI to generate neutral summary of USER content only
     const aiResponse = await callSereneAI(
       `Summarize the user's session in 2-3 neutral sentences (max 300 characters). Describe what the user expressed or reflected on. Do NOT provide advice, reassurance, or crisis resources. Do NOT speak directly to the user. Do NOT include assistant responses. Write in third person describing the user's reflections.\n\nUser messages:\n${userContent}`,
-      moodAtStart || undefined
+      domainContext || undefined
     );
 
     if (aiResponse.success && aiResponse.message) {
@@ -370,8 +371,8 @@ async function buildSessionSummary(input: {
   // Fallback: Generate neutral summary from user messages
   let summary = '';
   
-  if (moodAtStart) {
-    summary = `The user started from a ${moodAtStart} mood and `;
+  if (domainContext) {
+    summary = `The user focused on ${domainContext} load and `;
   } else {
     summary = 'The user ';
   }
@@ -380,9 +381,9 @@ async function buildSessionSummary(input: {
   const hasMultipleTopics = userMessages.length > 3;
   
   if (hasMultipleTopics) {
-    summary += 'reflected on multiple themes and feelings';
+    summary += 'reflected on multiple themes and pressures';
   } else {
-    summary += 'shared their current emotional state';
+    summary += 'shared a specific source of pressure';
   }
   
   summary += ` across ${userMessages.length} message${userMessages.length !== 1 ? 's' : ''}.`;

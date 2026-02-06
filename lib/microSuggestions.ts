@@ -1,4 +1,4 @@
-// Mood-mapped micro-suggestions for when Serene (AI) is unavailable
+// Load-domain micro-suggestions for when Anchor AI is unavailable
 // Non-AI, prewritten fallback suggestions that are calm and supportive
 
 export interface MicroSuggestion {
@@ -6,43 +6,47 @@ export interface MicroSuggestion {
   isOffline: boolean;
 }
 
-const SUGGESTIONS_BY_MOOD: Record<string, string[]> = {
-  calm: [
-    'You\'re in a calm space right now. Consider pausing here to notice what\'s working for you.',
-    'This calm moment is valuable. You might journal what led to feeling this way.',
+const SUGGESTIONS_BY_DOMAIN: Record<string, string[]> = {
+  academic: [
+    'Pick one academic task and define a 20-minute start. Small starts reduce load fastest.',
+    'If deadlines feel heavy, write the next concrete step and ignore the rest for now.',
   ],
-  okay: [
-    'You\'re doing okay. Small things can help: a short walk, a cup of tea, or just taking a breath.',
-    'Feeling okay is a good baseline. Notice one thing you\'re grateful for right now.',
+  financial: [
+    'List one expense you can pause this week, even if it\'s small. Relief comes from clarity.',
+    'If money feels tight, consider one practical action today: check a budget, ask about bursaries, or review hours.',
   ],
-  stressed: [
-    'When stressed, try the 5-4-3-2-1 grounding: notice 5 things you see, 4 you can touch, 3 you hear, 2 you smell, 1 you taste.',
-    'Stress often needs release. Consider deep breathing, a walk, or movement that feels good.',
+  belonging: [
+    'Social load drops when you start small. One short message to someone safe can help.',
+    'Consider a low-effort connection this week: a walk with a classmate or a study buddy check-in.',
   ],
-  low: [
-    'When feeling low, small actions help: step outside for a moment, reach out to someone you trust, or do something you usually enjoy.',
-    'You\'ve felt better before and you will again. Right now, be gentle with yourself.',
+  administrative: [
+    'Administrative load eases with a clear list. Write the top two tasks and ignore the rest for today.',
+    'If paperwork feels heavy, set a 15-minute timer and tackle just the first step.',
   ],
-  angry: [
-    'Anger is valid. It might help to express it safely: write it out, move your body, or take time alone.',
-    'When angry, pause if you can. Your anger is information—it\'s worth listening to what it\'s telling you.',
+  worklife: [
+    'Time load drops when you protect one block. Try a 60-minute no-distraction window this week.',
+    'If work-study balance is strained, pick one boundary for this week (start time, end time, or one break).',
   ],
-  overwhelmed: [
-    'When overwhelmed, break things into one small step. What\'s one thing you could do in the next 5 minutes?',
-    'Overwhelm often means too much at once. Try focusing on just one thing, or stepping away for a moment.',
+  health: [
+    'Energy load often improves with one small reset: water, food, or a short walk.',
+    'If you feel drained, pick one recovery habit to repeat for three days in a row.',
+  ],
+  future: [
+    'Future load eases with clarity. Write one question you need answered and who could help.',
+    'If next steps feel unclear, list one option you could explore this week (even a small one).',
   ],
 };
 
-export function getMicroSuggestion(moodId: string | null): MicroSuggestion {
-  // If no mood context, use a neutral suggestion
-  if (!moodId || !SUGGESTIONS_BY_MOOD[moodId]) {
+export function getMicroSuggestion(domainId: string | null): MicroSuggestion {
+  // If no domain context, use a neutral suggestion
+  if (!domainId || !SUGGESTIONS_BY_DOMAIN[domainId]) {
     return {
-      text: 'Thank you for checking in. Your check-in is saved and valued.',
+      text: 'Thanks for sharing. Your check-in is saved, and your load matters.',
       isOffline: true,
     };
   }
 
-  const suggestions = SUGGESTIONS_BY_MOOD[moodId];
+  const suggestions = SUGGESTIONS_BY_DOMAIN[domainId];
   const randomIndex = Math.floor(Math.random() * suggestions.length);
 
   return {
@@ -52,5 +56,5 @@ export function getMicroSuggestion(moodId: string | null): MicroSuggestion {
 }
 
 export function getOfflineMessage(): string {
-  return 'Serene is taking a break right now. Your check-in is saved. Try again in a bit.';
+  return 'Anchor is taking a break right now. Your check-in is saved. Try again in a bit.';
 }

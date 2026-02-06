@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { MOODS, type ChatSession } from '@/lib/types';
+import { MENTAL_LOAD_DOMAINS, type ChatSession } from '@/lib/types';
 
 interface ChatSummariesProps {
   userId: string;
@@ -47,12 +47,12 @@ export default function ChatSummaries({ userId }: ChatSummariesProps) {
     }
   };
 
-  const getMoodEmoji = (moodId: string) => {
-    return MOODS.find(m => m.id === moodId)?.emoji || '?';
+  const getDomainEmoji = (domainId: string | null | undefined) => {
+    return MENTAL_LOAD_DOMAINS.find((d) => d.id === domainId)?.emoji || '🧭';
   };
 
-  const getMoodLabel = (moodId: string) => {
-    return MOODS.find(m => m.id === moodId)?.label || moodId;
+  const getDomainLabel = (domainId: string | null | undefined) => {
+    return MENTAL_LOAD_DOMAINS.find((d) => d.id === domainId)?.label || 'General Load';
   };
 
   const formatDate = (dateString: string) => {
@@ -90,7 +90,7 @@ export default function ChatSummaries({ userId }: ChatSummariesProps) {
         className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-calm-blue hover:bg-calm-border text-calm-text transition-colors border border-calm-border"
         title="View past chat summaries"
       >
-        <span>📋 History</span>
+        <span>📋 Threads</span>
         <span className={`transform transition-transform ${isOpen ? 'rotate-180' : ''}`}>
           ▼
         </span>
@@ -101,8 +101,8 @@ export default function ChatSummaries({ userId }: ChatSummariesProps) {
         <div className="absolute top-full right-0 mt-2 w-80 max-h-96 bg-white rounded-lg shadow-lg border border-calm-border overflow-hidden z-50 flex flex-col">
           {/* Header */}
           <div className="px-4 py-3 border-b border-calm-border bg-calm-teal">
-            <h3 className="font-medium text-calm-text">Chat History</h3>
-            <p className="text-xs text-gray-500 mt-1">Your recent chat sessions</p>
+            <h3 className="font-medium text-calm-text">Support Threads</h3>
+            <p className="text-xs text-gray-500 mt-1">Structured follow-ups by domain</p>
           </div>
 
           {/* Content */}
@@ -118,7 +118,7 @@ export default function ChatSummaries({ userId }: ChatSummariesProps) {
             ) : summaries.length === 0 ? (
               <div className="flex items-center justify-center py-8 px-4">
                 <p className="text-sm text-gray-500 text-center">
-                  No chat history yet. Start a conversation to see summaries here.
+                  No support threads yet. Complete a check-in or load entry to start one.
                 </p>
               </div>
             ) : (
@@ -135,11 +135,14 @@ export default function ChatSummaries({ userId }: ChatSummariesProps) {
                         {summary.session_title}
                       </h4>
                       <span className="text-lg">
-                        {getMoodEmoji(summary.mood_at_start || 'unknown')}
+                        {getDomainEmoji(summary.domain_context)}
                       </span>
                     </div>
 
                     {/* Summary Text */}
+                    <p className="text-xs text-gray-500 mb-2">
+                      {getDomainLabel(summary.domain_context)}
+                    </p>
                     <p className="text-sm text-gray-700 line-clamp-2 group-hover:text-gray-900 mb-2">
                       {summary.summary_text || 'Session in progress...'}
                     </p>
@@ -150,7 +153,7 @@ export default function ChatSummaries({ userId }: ChatSummariesProps) {
                         {summary.message_count} message{summary.message_count !== 1 ? 's' : ''}
                       </span>
                       <span className="text-xs text-calm-blue group-hover:underline">
-                        View details →
+                        View thread →
                       </span>
                     </div>
                   </div>
@@ -201,7 +204,7 @@ export default function ChatSummaries({ userId }: ChatSummariesProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="text-lg">
-                      {getMoodEmoji(selectedSession.mood_at_start || 'unknown')}
+                      {getDomainEmoji(selectedSession.domain_context)}
                     </span>
                     <h3 className="text-lg font-medium text-calm-text">
                       {selectedSession.session_title}
@@ -239,15 +242,15 @@ export default function ChatSummaries({ userId }: ChatSummariesProps) {
                   )}
                 </div>
 
-                {/* Mood */}
+                {/* Domain */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">Mood at Start</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Load Domain</h4>
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">
-                      {getMoodEmoji(selectedSession.mood_at_start || 'unknown')}
+                      {getDomainEmoji(selectedSession.domain_context)}
                     </span>
                     <span className="text-sm text-gray-600">
-                      {getMoodLabel(selectedSession.mood_at_start || 'unknown')}
+                      {getDomainLabel(selectedSession.domain_context)}
                     </span>
                   </div>
                 </div>

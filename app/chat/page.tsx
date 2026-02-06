@@ -1,16 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { checkConsents } from '@/lib/consent';
 import ChatInterface from '@/components/ChatInterface';
 import Navigation from '@/components/Navigation';
+import { MENTAL_LOAD_DOMAINS, type MentalLoadDomainId } from '@/lib/types';
 
 export default function ChatPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
-  const [moodContext, setMoodContext] = useState<string | undefined>();
+  const [domainContext, setDomainContext] = useState<MentalLoadDomainId | 'general' | undefined>();
+  const [entryPoint, setEntryPoint] = useState<'checkin' | 'load' | 'spike' | undefined>();
   const [userId, setUserId] = useState<string | undefined>();
 
   useEffect(() => {
@@ -28,18 +31,18 @@ export default function ChatPage() {
         return;
       }
 
-      // Fetch user's most recent mood to provide context
-      const { data: recentMood } = await supabase
-        .from('mood_entries')
-        .select('mood_id')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+      const source = searchParams.get('source');
+      const domainParam = searchParams.get('domain');
+      const isValidDomain = MENTAL_LOAD_DOMAINS.some((d) => d.id === domainParam);
+      const domain = isValidDomain ? domainParam : 'general';
 
-      if (recentMood) {
-        setMoodContext(recentMood.mood_id);
+      if (source !== 'checkin' && source !== 'load' && source !== 'spike') {
+        router.push('/dashboard');
+        return;
       }
+
+      setEntryPoint(source);
+      setDomainContext(domain as MentalLoadDomainId | 'general');
 
       setIsLoading(false);
       setUserId(session.user.id);
@@ -57,8 +60,8 @@ export default function ChatPage() {
   }
   return (
     <div className="flex flex-col h-dvh bg-calm-cream pb-[env(safe-area-inset-bottom)]">
-      <ChatInterface moodContext={moodContext} userId={userId} />
-      <Navigation currentPage="chat" />
+      <ChatInterface domainContext={domainContext} entryPoint={entryPoint} userId={userId} />
+      <Navigation currentPage="dashboard" />
     </div>
   );
 }

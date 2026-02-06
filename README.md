@@ -1,24 +1,26 @@
-# Anchor Week 1 MVP
+# Anchor MVP
 
-Stay Steady - A preventative mental wellness companion that helps users check in with how they feel and build a private emotional timeline.
+Stay Steady - A preventive mental load companion for international postgraduate students in their first 12 months in Ireland.
 
 ## What is Anchor?
 
-Anchor is **not therapy** and **not a medical product**. It's a calm space to:
-- Quickly check in with how you feel (< 30 seconds)
-- Optionally reflect in one short sentence
-- See your emotional timeline over time
-- Know your data is private and yours alone
+Anchor is **not therapy** and **not a medical product**. It's a focused tool to:
+- Track mental load across 7 fixed domains
+- Complete a 3–5 minute weekly check-in
+- Log extra load entries during the week
+- View a secondary mood snapshot (not the core experience)
+- Keep your data private and yours alone
 
-## Features (Week 1)
+## Features (Anchor MVP)
 
 ✅ **Magic Link Authentication** — Secure, password-free login via email
-✅ **Mandatory Consent Flow** — Privacy, clinical disclaimer, crisis resources
-✅ **Mood Check-In** — Select from 6 moods + optional text (max 280 chars)
-✅ **Save to Database** — Mood, timestamp, and optional reflection stored securely
-✅ **Timeline Feed** — Private view of past moods, most recent first
-✅ **Simple Navigation** — Home, Timeline, Chat (placeholder), Settings
-✅ **Calm UX** — Soft colors, no urgency, non-judgmental tone
+✅ **Mandatory Consent Flow** — Privacy, non-clinical disclaimer, crisis resources
+✅ **Weekly Check-In (Primary)** — Structured, 3–5 minutes, domain-tagged
+✅ **Load Tracking (Secondary)** — Log pressure during the week
+✅ **Mental Load Domains (7)** — Fixed framework for consistent tracking
+✅ **Structured Chat Follow-Ups** — Only via check-ins or load entries
+✅ **Mood Snapshot (Secondary)** — Optional mood timeline view
+✅ **Institutional Aggregates (SQL)** — Anonymized cohort-level analytics
 
 ## Tech Stack
 
@@ -65,18 +67,24 @@ anchor/
 │   ├── login/             # Magic link login
 │   ├── auth/callback/     # OAuth callback handler
 │   ├── consent/           # Mandatory consent form
-│   ├── dashboard/         # Mood check-in (home)
-│   ├── timeline/          # Mood entries feed
-│   ├── chat/              # Placeholder (coming soon)
-│   └── settings/          # Logout + user info
+│   ├── dashboard/         # Load-focused home
+│   ├── checkin/           # Weekly structured check-in
+│   ├── load/              # Ad-hoc load tracking
+│   ├── timeline/          # Mood snapshot (secondary)
+│   ├── chat/              # Structured follow-up chat
+│   ├── onboarding/        # Semester context capture
+│   ├── institutional/     # Internal-only stub view
+│   └── settings/          # Privacy controls + logout
 ├── components/            # Reusable React components
 │   ├── Navigation.tsx     # Bottom navigation
-│   ├── MoodButton.tsx     # Mood selection buttons
-│   └── MoodCard.tsx       # Timeline mood card display
+│   ├── WeeklyCheckinFlow.tsx
+│   ├── LoadTracking.tsx
+│   ├── MoodButton.tsx     # Snapshot view only
+│   └── MoodCard.tsx       # Snapshot view only
 ├── lib/
 │   ├── supabase.ts        # Supabase client setup
 │   ├── consent.ts         # Consent logic
-│   └── types.ts           # TypeScript types + mood definitions
+│   └── types.ts           # Types + load domain framework
 ├── .env.local             # Environment variables (not in git)
 ├── tailwind.config.js     # Tailwind customization
 └── tsconfig.json          # TypeScript config
@@ -84,38 +92,33 @@ anchor/
 
 ## Database Schema
 
-### consents
-Stores user consent acceptance timestamps.
-```
-id, user_id, privacy_accepted_at, disclaimer_accepted_at, 
-crisis_disclosure_accepted_at, version, created_at
-```
+Anchor requires a fresh Supabase project. Use the full SQL schema:
 
-### mood_entries
-Stores user mood check-ins.
-```
-id, user_id, created_at, mood_id, text
-```
+- [ANCHOR_SUPABASE_SCHEMA.sql](ANCHOR_SUPABASE_SCHEMA.sql)
 
-See [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for exact SQL.
+Core tables:
+- mental_load_domains
+- users_extended
+- load_entries
+- load_domain_selections
+- weekly_checkin_responses
+- institutional_aggregates
+- chat_sessions (repurposed)
+- chat_summaries (repurposed)
+- mood_entries (snapshot only)
+- consent
 
 ## Design Principles
 
-1. **Calm, not urgent** — No gamification, streaks, or pressure
-2. **Private by default** — Row-level security, minimal data collection
-3. **Non-clinical** — Plain language, no diagnosis or advice
-4. **Respectful** — Crisis resources included, clear disclaimers
-5. **Fast** — Entire check-in flow < 30 seconds
-6. **Accessible** — Simple navigation, readable fonts, high contrast
+1. **Narrow ICP** — International postgrad students in first 12 months in Ireland
+2. **Mental load first** — Domains, structure, and weekly continuity
+3. **Non-clinical** — Plain language, no diagnosis or therapy claims
+4. **Private by default** — RLS, minimal data collection
+5. **Short and structured** — 3–5 minutes weekly check-in
 
-## Mood Options
+## Mood Snapshot (Secondary)
 
-- 😌 Calm
-- 🙂 Okay
-- 😰 Stressed
-- 😔 Low
-- 😠 Angry
-- 🌪️ Overwhelmed
+Mood tracking exists only as a secondary snapshot view. It is not the primary flow.
 
 ## Crisis Resources (Ireland)
 
@@ -144,19 +147,19 @@ Then update Supabase **URL Configuration** > **Redirect URLs** with your Vercel 
 2. Enter your email (any valid email works in dev)
 3. Check your email for magic link
 4. Accept consent
-5. Select a mood, optionally add text
-6. Click Save
-7. See it appear in Timeline
-8. Navigate between pages
+5. Complete onboarding (semester start + stage)
+6. Complete weekly check-in
+7. Log one load entry
+8. View Snapshot (optional)
 9. Logout and confirm redirect to login
 
-**Target**: Complete flow in under 30 seconds.
+**Target**: Weekly check-in in under 5 minutes.
 
 ## Important Notes
 
 ⚠️ **Not for medical use** — Anchor is not a substitute for professional mental health care.
 ⚠️ **Privacy-first** — No analytics, no tracking, no third-party services.
-⚠️ **Week 1 scope** — Future features (AI, insights, notifications) are out of scope.
+⚠️ **Scope** — This MVP is for structured load tracking, not broad wellness features.
 
 ## Support
 
@@ -168,4 +171,4 @@ For issues or questions:
 
 ---
 
-Built with ❤️ for mental wellness.
+Built for mental load clarity.

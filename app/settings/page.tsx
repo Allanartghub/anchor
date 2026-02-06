@@ -10,7 +10,7 @@ interface ConfirmDialog {
   open: boolean;
   title: string;
   message: string;
-  action: 'clear-chat' | 'clear-mood' | null;
+  action: 'clear-chat' | 'clear-load' | 'clear-checkins' | 'clear-mood' | null;
   isLoading: boolean;
 }
 
@@ -62,8 +62,28 @@ export default function SettingsPage() {
     setConfirmDialog({
       open: true,
       title: 'Clear Chat History',
-      message: 'Delete all chat sessions and summaries? This action cannot be undone.',
+      message: 'Delete all support threads and summaries? This action cannot be undone.',
       action: 'clear-chat',
+      isLoading: false,
+    });
+  };
+
+  const handleClearLoadHistory = () => {
+    setConfirmDialog({
+      open: true,
+      title: 'Clear Load Entries',
+      message: 'Delete all load entries? This action cannot be undone.',
+      action: 'clear-load',
+      isLoading: false,
+    });
+  };
+
+  const handleClearCheckins = () => {
+    setConfirmDialog({
+      open: true,
+      title: 'Clear Weekly Check-Ins',
+      message: 'Delete all weekly check-ins? This action cannot be undone.',
+      action: 'clear-checkins',
       isLoading: false,
     });
   };
@@ -71,8 +91,8 @@ export default function SettingsPage() {
   const handleClearMoodHistory = () => {
     setConfirmDialog({
       open: true,
-      title: 'Clear Mood History',
-      message: 'Delete all mood entries? This action cannot be undone.',
+      title: 'Clear Mood Snapshot History',
+      message: 'Delete all mood snapshot entries? This action cannot be undone.',
       action: 'clear-mood',
       isLoading: false,
     });
@@ -88,6 +108,10 @@ export default function SettingsPage() {
       const endpoint =
         confirmDialog.action === 'clear-chat'
           ? '/api/chat/clear'
+          : confirmDialog.action === 'clear-load'
+          ? '/api/load/clear'
+          : confirmDialog.action === 'clear-checkins'
+          ? '/api/checkin/clear'
           : '/api/mood/clear';
 
       const response = await fetch(endpoint, {
@@ -102,7 +126,14 @@ export default function SettingsPage() {
         throw new Error('Failed to delete data');
       }
 
-      const action = confirmDialog.action === 'clear-chat' ? 'Chat history' : 'Mood history';
+      const action =
+        confirmDialog.action === 'clear-chat'
+          ? 'Chat history'
+          : confirmDialog.action === 'clear-load'
+          ? 'Load entries'
+          : confirmDialog.action === 'clear-checkins'
+          ? 'Weekly check-ins'
+          : 'Mood snapshots';
       setSuccessMessage(`${action} cleared`);
       setTimeout(() => setSuccessMessage(''), 3000);
 
@@ -159,7 +190,7 @@ export default function SettingsPage() {
           <div className="calm-card mb-6">
             <h2 className="font-medium text-calm-teal mb-2">Your Data</h2>
             <p className="text-xs text-gray-500 mb-4">
-              Your reflections belong to you. You can delete them at any time.
+              Your load entries and weekly check-ins belong to you. You can delete them at any time.
             </p>
 
             <div className="space-y-3">
@@ -167,13 +198,25 @@ export default function SettingsPage() {
                 onClick={handleClearChatHistory}
                 className="w-full px-4 py-3 text-left rounded-lg border border-calm-border hover:bg-calm-cream transition-colors text-sm text-calm-text font-medium"
               >
-                Clear Chat History
+                Clear Support Threads
+              </button>
+              <button
+                onClick={handleClearLoadHistory}
+                className="w-full px-4 py-3 text-left rounded-lg border border-calm-border hover:bg-calm-cream transition-colors text-sm text-calm-text font-medium"
+              >
+                Clear Load Entries
+              </button>
+              <button
+                onClick={handleClearCheckins}
+                className="w-full px-4 py-3 text-left rounded-lg border border-calm-border hover:bg-calm-cream transition-colors text-sm text-calm-text font-medium"
+              >
+                Clear Weekly Check-Ins
               </button>
               <button
                 onClick={handleClearMoodHistory}
                 className="w-full px-4 py-3 text-left rounded-lg border border-calm-border hover:bg-calm-cream transition-colors text-sm text-calm-text font-medium"
               >
-                Clear Mood History
+                Clear Mood Snapshot History (optional)
               </button>
             </div>
           </div>

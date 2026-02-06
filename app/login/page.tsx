@@ -66,7 +66,10 @@ export default function LoginPage() {
         <div className="calm-card">
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-light text-calm-text mb-2">Anchor</h1>
-            <p className="text-sm text-gray-500">Stay Steady</p>
+            <p className="text-sm text-gray-500 mb-4">Stay Steady</p>
+            <p className="text-xs text-gray-600 max-w-xs mx-auto">
+              For international postgraduate students in their first 12 months in Ireland
+            </p>
           </div>
 
           <form onSubmit={handleSignIn} className="space-y-4">

@@ -48,7 +48,7 @@ export default function ConsentPage() {
     const success = await acceptAllConsents(userId);
 
     if (success) {
-      router.push('/dashboard');
+      router.push('/onboarding');
     } else {
       setError('Failed to save consent. Please try again.');
       setIsAccepting(false);
@@ -69,12 +69,17 @@ export default function ConsentPage() {
         <div className="calm-card">
           <h1 className="text-2xl font-light text-calm-text mb-8">Welcome to Anchor</h1>
 
+          <div className="mb-6 text-sm text-gray-600">
+            Anchor is built exclusively for international postgraduate students in their first 12 months in Ireland.
+            It is not intended for undergraduates, domestic students, or general wellness use.
+          </div>
+
           <div className="space-y-6 mb-8">
             {/* Privacy Acknowledgement */}
             <div className="p-4 rounded-lg bg-calm-blue border border-calm-border">
               <h2 className="font-medium text-calm-text mb-3">Privacy Acknowledgement</h2>
               <p className="text-sm text-gray-700 leading-relaxed">
-                Your mood entries and reflections are private and stored securely. We will never share your data with third parties. You can delete your account and all your data at any time.
+                Your mental load entries, reflections, and weekly check-ins are private and stored securely. We will never share your data with third parties. You can delete your account and all your data at any time.
               </p>
             </div>
 
@@ -82,7 +87,7 @@ export default function ConsentPage() {
             <div className="p-4 rounded-lg bg-calm-blue border border-calm-border">
               <h2 className="font-medium text-calm-text mb-3">Important: Not Therapy or Medical Care</h2>
               <p className="text-sm text-gray-700 leading-relaxed">
-                Anchor is a wellness companion, not a substitute for therapy, counselling, or medical treatment. If you are experiencing a mental health crisis or having thoughts of self-harm, please reach out to a professional immediately.
+                Anchor is a preventive mental load companion for international postgraduate students in their first 12 months in Ireland. It is not therapy, counselling, or medical treatment. If you are experiencing a mental health crisis or having thoughts of self-harm, please reach out to a professional immediately.
               </p>
             </div>
 

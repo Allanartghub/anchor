@@ -4,19 +4,26 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { checkConsents } from '@/lib/consent';
-import { MOODS, type MoodEntry } from '@/lib/types';
+import { MENTAL_LOAD_DOMAINS, type LoadEntry, type WeeklyCheckinResponse } from '@/lib/types';
 import Navigation from '@/components/Navigation';
-import MoodButton from '@/components/MoodButton';
+
+/**
+ * Dashboard (Load-Focused)
+ * 
+ * Primary interface for Anchor MVP.
+ * Emphasizes:
+ * - Weekly check-in as default entry point
+ * - Ad-hoc load tracking
+ * - Domain-level mental load overview
+ * - Recent activity
+ */
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [userId, setUserId] = useState<string | null>(null);
-  const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [text, setText] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [loadEntries, setLoadEntries] = useState<LoadEntry[]>([]);
+  const [weeklyCheckins, setWeeklyCheckins] = useState<WeeklyCheckinResponse[]>([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -27,139 +34,161 @@ export default function DashboardPage() {
         return;
       }
 
-      // Check consent
       const hasConsented = await checkConsents(session.user.id);
       if (!hasConsented) {
         router.push('/consent');
         return;
       }
 
-      setUserId(session.user.id);
+      await fetchUserData(session.user.id);
       setIsLoading(false);
     };
 
     checkAuth();
   }, [router]);
 
-  const handleSave = async () => {
-    if (!userId || !selectedMood) {
-      setError('Please select a mood');
-      return;
-    }
-
-    setError('');
-    setSuccess('');
-    setIsSaving(true);
-
+  const fetchUserData = async (userId: string) => {
     try {
-      const { error: insertError } = await supabase
-        .from('mood_entries')
-        .insert([
-          {
-            user_id: userId,
-            mood_id: selectedMood,
-            text: text.trim() || null,
-            created_at: new Date().toISOString(),
-          },
-        ]);
+      const { data: entries, error: entriesError } = await supabase
+        .from('load_entries')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-      if (insertError) {
-        setError('Failed to save. Please try again.');
-        console.error('Insert error:', insertError);
-      } else {
-        setSuccess('Saved!');
-        setSelectedMood(null);
-        setText('');
-        setTimeout(() => setSuccess(''), 2000);
-      }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
-    } finally {
-      setIsSaving(false);
+      if (entriesError) throw entriesError;
+      setLoadEntries(entries || []);
+
+      const { data: checkins, error: checkinsError } = await supabase
+        .from('weekly_checkin_responses')
+        .select('*')
+        .eq('user_id', userId)
+        .order('completed_at', { ascending: false })
+        .limit(5);
+
+      if (checkinsError) throw checkinsError;
+      setWeeklyCheckins(checkins || []);
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+      setError('Failed to load your data');
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-calm-cream">
-        <p className="text-calm-text">Loading...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <p className="text-gray-600">Loading...</p>
       </div>
     );
   }
 
-  const selectedMoodObj = MOODS.find(m => m.id === selectedMood);
-
   return (
-    <div className="min-h-screen bg-calm-cream flex flex-col pb-[calc(120px+env(safe-area-inset-bottom))]">
-      <div className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
-          <div className="calm-card mb-8">
-            <h1 className="text-2xl font-light text-calm-text mb-2">How are you feeling?</h1>
-            <p className="text-sm text-gray-500 mb-8">Take 30 seconds to check in with yourself.</p>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navigation currentPage="dashboard" />
 
-            {/* Mood Buttons */}
-            <div className="grid grid-cols-3 gap-3 mb-8">
-              {MOODS.map((mood) => (
-                <MoodButton
-                  key={mood.id}
-                  mood={mood}
-                  isSelected={selectedMood === mood.id}
-                  onClick={() => setSelectedMood(mood.id)}
-                />
+      <div className="flex-1 px-4 py-12">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-12">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Stay Steady</h1>
+            <p className="text-gray-600 text-lg">
+              Anchor tracks your mental load across 7 key areas to spot patterns and support you early.
+            </p>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-12">
+            <p className="text-sm text-blue-900">
+              <strong>For international postgraduate students in their first 12 months in Ireland.</strong>
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-8 mb-12 shadow-sm hover:shadow-md transition">
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Weekly Check-In</h2>
+                <p className="text-gray-600 mb-6">
+                  Take 3–5 minutes to reflect on what felt heavier than expected this week.
+                </p>
+                <button
+                  onClick={() => router.push('/checkin')}
+                  className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+                >
+                  Start Check-In →
+                </button>
+              </div>
+              <div className="text-6xl">📅</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-8 mb-12 shadow-sm hover:shadow-md transition">
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Log Current Pressure</h2>
+                <p className="text-gray-600 mb-6">
+                  Something putting pressure on you today? Log it anytime.
+                </p>
+                <button
+                  onClick={() => router.push('/load')}
+                  className="px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition"
+                >
+                  Log Load Entry
+                </button>
+              </div>
+              <div className="text-6xl">📊</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-8 mb-12 shadow-sm hover:shadow-md transition">
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Quick Mood Snapshot</h2>
+                <p className="text-gray-600 mb-6">
+                  Capture how you're feeling right now—daily or weekly.
+                </p>
+                <button
+                  onClick={() => router.push('/mood')}
+                  className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition"
+                >
+                  Log Mood
+                </button>
+              </div>
+              <div className="text-6xl">😌</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-8 mb-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Load Domains</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {MENTAL_LOAD_DOMAINS.map((domain) => (
+                <div
+                  key={domain.id}
+                  className="p-4 rounded-lg bg-gray-50 border border-gray-200 text-center"
+                >
+                  <div className="text-3xl mb-2">{domain.emoji}</div>
+                  <div className="text-sm font-semibold text-gray-900">{domain.label}</div>
+                </div>
               ))}
             </div>
-
-            {/* Selected Mood Display */}
-            {selectedMoodObj && (
-              <div className="mb-8 p-4 rounded-lg bg-calm-blue border border-calm-border text-center">
-                <p className="text-3xl mb-2">{selectedMoodObj.emoji}</p>
-                <p className="text-sm text-calm-text font-medium">{selectedMoodObj.label}</p>
-              </div>
-            )}
-
-            {/* Optional Text Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-calm-text mb-2">
-                What's on your mind? (optional)
-              </label>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value.slice(0, 280))}
-                placeholder="One sentence is enough..."
-                maxLength={280}
-                rows={3}
-                className="calm-input resize-none"
-                disabled={isSaving}
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                {text.length}/280
-              </p>
-            </div>
-
-            {error && (
-              <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700 mb-4">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="rounded-lg bg-calm-sage p-4 text-sm text-green-800 mb-4">
-                ✓ {success}
-              </div>
-            )}
-
-            <button
-              onClick={handleSave}
-              disabled={!selectedMood || isSaving}
-              className="calm-button-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSaving ? 'Saving...' : 'Save'}
-            </button>
           </div>
+
+          {(loadEntries.length > 0 || weeklyCheckins.length > 0) && (
+            <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-gray-600 mb-4">You have {loadEntries.length + weeklyCheckins.length} entries recorded.</p>
+              <button
+                onClick={() => router.push('/history')}
+                className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+              >
+                View Your Load History →
+              </button>
+            </div>
+          )}
+
+          {error && (
+            <div className="flex items-start px-4 py-3 mb-4 rounded-lg bg-red-50 border border-red-200">
+              <span className="text-red-700 text-sm">{error}</span>
+            </div>
+          )}
         </div>
       </div>
-
-      <Navigation currentPage="dashboard" />
     </div>
   );
 }

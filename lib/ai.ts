@@ -1,5 +1,5 @@
 // AI service abstraction: Hugging Face Router (OpenAI-compatible) with safe fallbacks
-// For Serene chatbot (server-side only)
+// For Anchor guide (server-side only)
 
 export interface AIResponse {
   success: boolean;
@@ -21,18 +21,18 @@ if (process.env.NODE_ENV !== 'production') {
 
 const HF_ROUTER_CHAT_URL = "https://router.huggingface.co/v1/chat/completions";
 
-// System prompt for Serene - calm, supportive, ethical wellness companion
-const SERENE_SYSTEM_PROMPT = `You are Serene, a calm and supportive mental wellness companion based in Ireland. Your role is to help users reflect on their emotions, process feelings, and find healthy coping strategies.
+// System prompt for Anchor - calm, supportive, non-clinical mental load companion
+const ANCHOR_SYSTEM_PROMPT = `You are Anchor, a calm and supportive mental load companion based in Ireland. Your role is to help international postgraduate students (first 12 months in Ireland) reflect on their mental load and identify small, realistic ways to reduce it.
 
 CONTEXT:
-- You are supporting users in Ireland
-- All advice and resources should be Ireland-appropriate
+- You are supporting international postgraduate students in their first 12 months in Ireland
+- All guidance should be non-clinical, practical, and preventive
 
-MENTAL WELLNESS FOCUS:
-- Specialize in emotional support, stress management, anxiety, depression, and general mental wellbeing
-- Use evidence-based approaches: active listening, validation, cognitive reframing, mindfulness
-- Help users identify patterns, triggers, and coping mechanisms
-- Encourage self-compassion and realistic self-talk
+MENTAL LOAD FOCUS:
+- Focus on pressure points: academic load, financial load, belonging & social load, administrative & immigration load, work–life & time load, health & energy load, future & stability load
+- Use plain language and short responses (2-3 sentences max)
+- Reflect what you hear and ask one gentle, specific follow-up question
+- Avoid generic wellness advice or broad emotional exploration
 
 IMPORTANT GUIDELINES:
 - You are NOT a therapist or medical professional
@@ -41,28 +41,27 @@ IMPORTANT GUIDELINES:
 - Keep responses warm, empathetic, and brief (2-3 sentences max)
 - Use calm, non-judgmental language
 - Never use red/green labels or "good/bad" judgments
-- Reflect what you hear, ask gentle questions, and validate feelings
 - If unsure, encourage speaking to a professional or calling a crisis line
 
 IMPORTANT: Always respond directly to the user with a caring message. Do not provide internal reasoning or thinking blocks. Just give a warm, supportive response.`;
 
 /**
- * Call Serene AI to generate a response.
+ * Call Anchor AI to generate a response.
  * Uses Hugging Face Router API with an ordered fallback model list.
  */
 export async function callSereneAI(
   userMessage: string,
-  moodContext?: string
+  domainContext?: string
 ): Promise<AIResponse> {
-  console.log("[Serene AI] Generating response...");
+  console.log("[Anchor AI] Generating response...");
 
   const contextualMessage =
-    moodContext && moodContext !== "null"
-      ? `[User's current mood: ${moodContext}]\n\n${userMessage}`
+    domainContext && domainContext !== "null"
+      ? `[User's current load domain: ${domainContext}]\n\n${userMessage}`
       : userMessage;
 
   if (!HF_TOKEN || HF_TOKEN.trim() === "") {
-    console.log("[Serene AI] ⚠️ No HF token configured. Offline mode.");
+    console.log("[Anchor AI] ⚠️ No HF token configured. Offline mode.");
     return { success: false, error: "AI service unavailable (offline mode)" };
   }
 
@@ -70,7 +69,7 @@ export async function callSereneAI(
     return await tryHuggingFaceRouter(contextualMessage);
   } catch (error) {
     console.warn(
-      "[Serene AI] Hugging Face Router failed:",
+      "[Anchor AI] Hugging Face Router failed:",
       error instanceof Error ? error.message : error
     );
     return { success: false, error: "AI service unavailable" };
@@ -109,7 +108,7 @@ async function tryHuggingFaceRouter(userMessage: string): Promise<AIResponse> {
         body: JSON.stringify({
           model,
           messages: [
-            { role: "system", content: SERENE_SYSTEM_PROMPT },
+            { role: "system", content: ANCHOR_SYSTEM_PROMPT },
             { role: "user", content: userMessage },
           ],
           temperature: 0.7,
@@ -293,10 +292,10 @@ Your life matters. These services are trained to help, and talking to someone ca
 }
 /**
  * Generate a human-readable session title
- * Format: "Today · Mood" or "Feb 5 · Mood"
+ * Format: "Today · Domain" or "Feb 5 · Domain"
  * Used for session labels in chat history UI
  */
-export function generateSessionTitle(startedAt: string, moodAtStart?: string | null): string {
+export function generateSessionTitle(startedAt: string, domainContext?: string | null): string {
   const date = new Date(startedAt);
   const today = new Date();
   const yesterday = new Date(today);
@@ -318,6 +317,6 @@ export function generateSessionTitle(startedAt: string, moodAtStart?: string | n
     dateLabel = `${month} ${day}`;
   }
 
-  const moodLabel = moodAtStart || 'Session';
-  return `${dateLabel} · ${moodLabel}`;
+  const domainLabel = domainContext || 'Session';
+  return `${dateLabel} · ${domainLabel}`;
 }

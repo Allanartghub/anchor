@@ -7,7 +7,7 @@ import type { Consent } from './types';
 export async function checkConsents(userId: string): Promise<boolean> {
   try {
     const { data, error } = await supabase
-      .from('consents')
+      .from('consent')
       .select('*')
       .eq('user_id', userId)
       .single();
@@ -38,7 +38,7 @@ export async function getOrCreateConsent(userId: string): Promise<Consent | null
   try {
     // Try to get existing
     const { data: existing, error: selectError } = await supabase
-      .from('consents')
+      .from('consent')
       .select('*')
       .eq('user_id', userId)
       .single();
@@ -48,7 +48,7 @@ export async function getOrCreateConsent(userId: string): Promise<Consent | null
     // If no error on select, record doesn't exist. Create it.
     if (selectError && selectError.code === 'PGRST116') {
       const { data: newConsent, error: insertError } = await supabase
-        .from('consents')
+        .from('consent')
         .insert([
           {
             user_id: userId,
@@ -81,16 +81,22 @@ export async function acceptAllConsents(userId: string): Promise<boolean> {
     const now = new Date().toISOString();
 
     const { error } = await supabase
-      .from('consents')
-      .update({
-        privacy_accepted_at: now,
-        disclaimer_accepted_at: now,
-        crisis_disclosure_accepted_at: now,
-      })
-      .eq('user_id', userId);
+      .from('consent')
+      .upsert(
+        {
+          user_id: userId,
+          version: 1,
+          privacy_accepted_at: now,
+          disclaimer_accepted_at: now,
+          crisis_disclosure_accepted_at: now,
+        },
+        { onConflict: 'user_id' }
+      )
+      .select('user_id')
+      .single();
 
     if (error) {
-      console.error('Error accepting consents:', error);
+      console.error('Error accepting consents:', { error, userId });
       return false;
     }
 

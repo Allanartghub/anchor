@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { checkConsents } from '@/lib/consent';
-import { MOODS, type MoodEntry } from '@/lib/types';
+import { MOODS_DEPRECATED as MOODS, type MoodEntry } from '@/lib/types';
 import Navigation from '@/components/Navigation';
 import MoodCard from '@/components/MoodCard';
 
@@ -171,8 +171,10 @@ export default function TimelinePage() {
       <div className="flex-1 px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-2xl font-light text-calm-text mb-2">Your Timeline</h1>
-            <p className="text-sm text-gray-500">A private record of how you've been feeling.</p>
+            <h1 className="text-2xl font-light text-calm-text mb-2">Mood Snapshot</h1>
+            <p className="text-sm text-gray-500">
+              A secondary view of your mood over time. Your primary focus is mental load tracking.
+            </p>
           </div>
 
           {error && (

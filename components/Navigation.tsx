@@ -3,7 +3,7 @@
 import Link from 'next/link';
 
 interface NavigationProps {
-  currentPage: 'dashboard' | 'timeline' | 'chat' | 'settings';
+  currentPage: 'dashboard' | 'timeline' | 'settings' | 'history';
 }
 
 export default function Navigation({ currentPage }: NavigationProps) {
@@ -18,24 +18,24 @@ export default function Navigation({ currentPage }: NavigationProps) {
           href="/dashboard"
           className={`flex flex-col items-center gap-1 transition-colors ${isActive('dashboard')}`}
         >
-          <span className="text-xl">😌</span>
+          <span className="text-xl">🧭</span>
           <span className="text-xs font-medium">Home</span>
+        </Link>
+
+        <Link
+          href="/history"
+          className={`flex flex-col items-center gap-1 transition-colors ${isActive('history')}`}
+        >
+          <span className="text-xl">📊</span>
+          <span className="text-xs font-medium">History</span>
         </Link>
 
         <Link
           href="/timeline"
           className={`flex flex-col items-center gap-1 transition-colors ${isActive('timeline')}`}
         >
-          <span className="text-xl">📅</span>
-          <span className="text-xs font-medium">Timeline</span>
-        </Link>
-
-        <Link
-          href="/chat"
-          className={`flex flex-col items-center gap-1 transition-colors ${isActive('chat')}`}
-        >
-          <span className="text-xl">💬</span>
-          <span className="text-xs font-medium">Chat</span>
+          <span className="text-xl">😌</span>
+          <span className="text-xs font-medium">Mood</span>
         </Link>
 
         <Link
@@ -51,8 +51,8 @@ export default function Navigation({ currentPage }: NavigationProps) {
       {/* Footer - fixed at very bottom with safe-area padding */}
       <footer className="fixed bottom-0 left-0 right-0 text-xs text-slate-500 bg-slate-50 border-t border-calm-border px-4 py-3 text-center z-20 h-14 flex items-center justify-center pb-[env(safe-area-inset-bottom)]">
         <p className="max-w-2xl mx-auto">
-          Serene is not a therapist or medical care. Messages are processed to provide support.<br/>
-          Crisis Resources: Samaritans 116 123 | Pieta House 1800 247 247 | Aware 1800 80 48 48
+          Anchor is not therapy or medical care. If you feel unsafe, seek professional support.<br/>
+          Ireland crisis resources: Samaritans 116 123 | Pieta House 1800 247 247 | Aware 1800 80 48 48
         </p>
       </footer>
     </>

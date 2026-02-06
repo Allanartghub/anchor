@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 
 export interface ChatRequestPayload {
   message: string;
-  moodContext: string | null;
+  domainContext: string | null;
   session_id?: string | null;
 }
 
@@ -41,7 +41,7 @@ export async function sendChatMessage(
   }
 
   if (!session || !session.access_token) {
-    throw new Error('Not authenticated. Please sign in to chat with Serene.');
+    throw new Error('Not authenticated. Please sign in to continue.');
   }
 
   const token = session.access_token;
