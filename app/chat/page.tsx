@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { checkConsents } from '@/lib/consent';
@@ -8,7 +8,7 @@ import ChatInterface from '@/components/ChatInterface';
 import Navigation from '@/components/Navigation';
 import { MENTAL_LOAD_DOMAINS, type MentalLoadDomainId } from '@/lib/types';
 
-export default function ChatPage() {
+function ChatPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
@@ -49,7 +49,7 @@ export default function ChatPage() {
     };
 
     checkAuth();
-  }, [router]);
+  }, [router, searchParams]);
 
   if (isLoading) {
     return (
@@ -63,5 +63,19 @@ export default function ChatPage() {
       <ChatInterface domainContext={domainContext} entryPoint={entryPoint} userId={userId} />
       <Navigation currentPage="dashboard" />
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense
+      fallback={(
+        <div className="flex items-center justify-center min-h-screen bg-calm-cream">
+          <p className="text-calm-text">Loading...</p>
+        </div>
+      )}
+    >
+      <ChatPageContent />
+    </Suspense>
   );
 }

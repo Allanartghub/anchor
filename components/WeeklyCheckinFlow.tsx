@@ -122,8 +122,7 @@ export default function WeeklyCheckinFlow({
           message: insertError.message, 
           code: insertError.code,
           details: insertError.details,
-          hint: insertError.hint,
-          status: insertError.status
+          hint: insertError.hint
         });
         throw new Error(`Failed to save check-in: ${insertError.message}`);
       }

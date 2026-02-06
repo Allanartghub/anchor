@@ -243,8 +243,7 @@ export default function ChatInterface({ domainContext, entryPoint, userId }: Cha
             <div ref={messagesEndRef} />
           </div>
         </div>
-      <form
-
+      </main>
       {/* Input - fixed above nav and footer */}
       <section className="fixed left-0 right-0 bottom-[112px] z-30">
         <div className="max-w-xl mx-auto px-4">
@@ -252,23 +251,23 @@ export default function ChatInterface({ domainContext, entryPoint, userId }: Cha
             <div className="flex gap-2">
               <textarea
                 ref={textareaRef}
-            placeholder={selectedPrompt ? 'Short response...' : 'Select a prompt to begin'}
+                value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
-            disabled={isLoading || !isAuthenticated || !selectedPrompt}
+                  if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     handleSendMessage(e as unknown as React.FormEvent);
                   }
-            disabled={isLoading || !input.trim() || !isAuthenticated || !selectedPrompt}
-                placeholder="Type your thoughts..."
-                disabled={isLoading || !isAuthenticated}
+                }}
+                disabled={isLoading || !isAuthenticated || !selectedPrompt}
+                placeholder={selectedPrompt ? 'Type your thoughts...' : 'Select a prompt to begin'}
                 className="flex-1 p-3 border border-calm-border rounded-lg text-calm-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-calm-blue resize-none disabled:bg-gray-100"
                 rows={2}
                 maxLength={500}
               />
               <button
                 type="submit"
-                disabled={isLoading || !input.trim() || !isAuthenticated}
+                disabled={isLoading || !input.trim() || !isAuthenticated || !selectedPrompt}
                 className="px-6 py-3 bg-calm-blue text-calm-text rounded-lg hover:bg-calm-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex-shrink-0"
               >
                 {isLoading ? 'Sending...' : 'Send'}
