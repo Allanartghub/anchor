@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background-color: #faf9f7;
+  color: #2c3e50;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  line-height: 1.6;
+}
+
+@layer components {
+  .calm-card {
+    @apply bg-white rounded-2xl shadow-sm border border-calm-border p-6;
+  }
+
+  .calm-button {
+    @apply px-6 py-3 rounded-xl font-medium transition-all duration-200 ease-out;
+  }
+
+  .calm-button-primary {
+    @apply calm-button bg-calm-blue text-calm-text hover:bg-blue-200 active:scale-95;
+  }
+
+  .calm-button-secondary {
+    @apply calm-button bg-gray-100 text-calm-text hover:bg-gray-200 active:scale-95;
+  }
+
+  .calm-input {
+    @apply w-full px-4 py-3 rounded-lg border border-calm-border bg-white text-calm-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-calm-blue focus:border-transparent transition-all;
+  }
+}
