@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import Navigation from '@/components/Navigation';
 
+export const dynamic = 'force-dynamic';
+
 interface SupportCase {
   id: string;
   status: string;
@@ -19,17 +21,29 @@ export default function SupportMessagesPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Memoize supabase client to prevent re-renders
-  const supabase = useMemo(
-    () =>
-      createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      ),
-    []
-  );
+  const supabase = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      return null;
+    }
+
+    return createClient(supabaseUrl, supabaseKey);
+  }, []);
 
   useEffect(() => {
     const loadActiveCases = async () => {
+      if (!supabase) {
+        setError('Missing Supabase configuration');
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
