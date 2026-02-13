@@ -55,6 +55,7 @@ export const LoadIntensityMap: Record<LoadIntensityLabel, LoadIntensityNumeric> 
 export interface UsersExtended {
   id: string;
   user_id: string;
+  institution_id?: string | null;
   semester_start: 'Early January' | 'Late January' | 'Early September' | 'Late September' | 'Other / Not sure';
   semester_position: 'Start' | 'Middle' | 'End';
   cohort_code: string | null;
