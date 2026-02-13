@@ -116,7 +116,7 @@ export async function POST(request: Request) {
           institution_id: nciInstitutionId,
           email: email.toLowerCase(),
           full_name,
-          role: 'counsellor',
+          role: 'support_agent', // Use a valid default role
           is_active: true,
         });
 
