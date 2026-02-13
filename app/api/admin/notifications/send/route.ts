@@ -14,10 +14,8 @@ export async function POST(req: NextRequest) {
       await maybeSendSupportReplyNotification(user_id, case_id);
       return NextResponse.json({ success: true });
     } else {
-      // For weekly reminders, fake a user object for the job
-      await runWeeklyCheckinReminderJob({
-        overrideUser: { user_id, email: null, period_key: null, type },
-      });
+      // For weekly reminders, run the job for all users
+      await runWeeklyCheckinReminderJob();
       return NextResponse.json({ success: true });
     }
   } catch (error) {
