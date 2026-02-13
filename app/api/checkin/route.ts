@@ -210,8 +210,20 @@ export async function POST(request: Request) {
       .single();
 
     if (checkinError) {
-      console.error('[CHECKIN_ERROR]', checkinError);
-      return new Response(JSON.stringify({ error: `Failed to save check-in: ${checkinError.message}` }), {
+      console.error('[CHECKIN_ERROR]', {
+        error: checkinError,
+        user_id,
+        week_number,
+        semester_year,
+        primary_domain_id,
+        secondary_domain_id,
+        intensity_label,
+        intensity_numeric,
+        structured_prompt,
+        response_text,
+        suggested_action,
+      });
+      return new Response(JSON.stringify({ error: `Failed to save check-in: ${checkinError.message}`, details: checkinError }), {
         status: 500,
       });
     }
@@ -257,7 +269,16 @@ export async function POST(request: Request) {
           });
 
         if (riskEventError) {
-          console.error('[RISK_EVENT_ERROR]', riskEventError);
+          console.error('[RISK_EVENT_ERROR]', {
+            error: riskEventError,
+            user_id,
+            checkin_id: checkin.id,
+            institution_id: institutionId,
+            risk_tier,
+            reason_codes,
+            confidence_band: inferredSelfHarm !== 'none' ? 'high' : 'medium',
+            model_version: '1.1',
+          });
           // Don't fail the check-in if risk event creation fails
         }
       }
@@ -278,9 +299,12 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('[CHECKIN_ROUTE_ERROR]', error);
+    console.error('[CHECKIN_ROUTE_ERROR]', {
+      error,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) }),
       { status: 500 }
     );
   }
