@@ -285,11 +285,9 @@ export default function LoginPage() {
           </div>
 
           <p className="text-xs text-gray-500 text-center mt-6">
-            {authMode === 'magic' 
-              ? "We'll send you a secure login link. No password needed."
-              : passwordMode === 'signup'
-                ? 'Create an account to get started with Anchor.'
-                : 'Sign in to access your account.'
+            {passwordMode === 'signup'
+              ? 'Create an account to get started with Anchor.'
+              : 'Sign in to access your account.'
             }
           </p>
         </div>
