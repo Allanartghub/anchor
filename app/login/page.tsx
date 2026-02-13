@@ -5,6 +5,11 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const [resetEmail, setResetEmail] = useState('');
+    const [resetLoading, setResetLoading] = useState(false);
+    const [resetMessage, setResetMessage] = useState('');
+    const [resetError, setResetError] = useState('');
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -91,6 +96,77 @@ export default function LoginPage() {
     );
   }
 
+  if (showForgotPassword) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-calm-cream px-4">
+        <div className="w-full max-w-md">
+          <div className="calm-card">
+            <div className="mb-8 text-center">
+              <h1 className="text-2xl font-light text-calm-text mb-2">Forgot Password?</h1>
+              <p className="text-sm text-gray-500 mb-4">Enter your email to receive a reset link.</p>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setResetError('');
+                setResetMessage('');
+                setResetLoading(true);
+                try {
+                  const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+                    redirectTo: `${window.location.origin}/reset-password`,
+                  });
+                  if (error) {
+                    setResetError(error.message);
+                  } else {
+                    setResetMessage('If your email is registered, a reset link has been sent.');
+                  }
+                } catch (err: any) {
+                  setResetError(err.message || 'An error occurred');
+                } finally {
+                  setResetLoading(false);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-calm-text mb-2">Email address</label>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  required
+                  className="calm-input"
+                  disabled={resetLoading}
+                />
+              </div>
+              {resetMessage && (
+                <div className="rounded-lg bg-calm-sage p-4 text-sm text-green-800">{resetMessage}</div>
+              )}
+              {resetError && (
+                <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700">{resetError}</div>
+              )}
+              <button
+                type="submit"
+                disabled={resetLoading}
+                className="calm-button-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {resetLoading ? 'Sending...' : 'Send Reset Link'}
+              </button>
+            </form>
+            <button
+              type="button"
+              className="mt-6 w-full text-xs text-gray-500 hover:underline"
+              onClick={() => setShowForgotPassword(false)}
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-calm-cream px-4">
       <div className="w-full max-w-md">
@@ -159,6 +235,15 @@ export default function LoginPage() {
                 className="calm-input"
                 disabled={isLoading}
               />
+              {passwordMode === 'signin' && (
+                <button
+                  type="button"
+                  className="text-xs text-blue-600 hover:underline mt-2 float-right"
+                  onClick={() => setShowForgotPassword(true)}
+                >
+                  Forgot Password?
+                </button>
+              )}
             </div>
 
             {message && (
