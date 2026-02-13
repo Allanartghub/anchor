@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, getAdminServiceClient } from '@/lib/adminAuth';
+import { maybeSendSupportReplyNotification } from '@/lib/supportReplyNotificationJob';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ caseId: string }> }) {
   try {
@@ -110,6 +111,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cas
         { error: 'Failed to send message' },
         { status: 500 }
       );
+    }
+
+    // Trigger support reply notification (push/email)
+    try {
+      await maybeSendSupportReplyNotification(supportCase.user_id, caseId);
+    } catch (notifyErr) {
+      console.warn('[SEND_MESSAGE] Notification error:', notifyErr);
     }
 
     // Update first_response_at and status if this is the first admin response

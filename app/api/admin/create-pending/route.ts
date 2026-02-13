@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, full_name, admin_secret_key, password, auth_uid, auth_mode = 'magic' } = body;
+    const { email, full_name, admin_secret_key, password, auth_uid, auth_mode = 'password' } = body;
 
     console.log('[CREATE_PENDING] Received request:', { email, full_name, has_secret_key: !!admin_secret_key, auth_mode, has_auth_uid: !!auth_uid });
 
@@ -84,8 +84,8 @@ export async function POST(request: Request) {
 
     const nciInstitutionId = '550e8400-e29b-41d4-a716-446655440000';
 
-    // PASSWORD MODE: Client has already created auth account, we just create admin_users record
-    if (auth_mode === 'password' && auth_uid) {
+    // Only allow password mode: Client has already created auth account, we just create admin_users record
+    if (auth_uid) {
       console.log('[CREATE_PENDING] Password mode - creating admin record for user:', auth_uid);
       
       // Check if already an admin
@@ -144,55 +144,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Magic link mode: store pending admin and send OTP
-    console.log('[CREATE_PENDING] Magic link mode - creating pending record');
-    
-    const browserClient = getBrowserClient();
-    
-    const { data: pendingAdmin, error: pendingAdminError } = await serviceClient
-      .from('pending_admins')
-      .upsert(
-        {
-          email: email.toLowerCase(),
-          full_name,
-          institution_id: nciInstitutionId,
-          created_at: new Date().toISOString(),
-        },
-        { onConflict: 'email' }
-      )
-      .select()
-      .single();
-
-    if (pendingAdminError) {
-      console.error('[CREATE_PENDING] Error creating pending admin:', pendingAdminError);
-    } else {
-      console.log('[CREATE_PENDING] Pending admin created:', { email });
-    }
-
-    console.log('[CREATE_PENDING] Sending OTP to', email.toLowerCase());
-    const { error: otpError } = await browserClient.auth.signInWithOtp({
-      email: email.toLowerCase(),
-      options: {
-        emailRedirectTo: `${request.headers.get('origin')}/api/auth/callback`,
-      },
-    });
-
-    if (otpError) {
-      console.error('[CREATE_PENDING] OTP Error:', otpError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to send sign-in link', details: otpError.message }),
-        { status: 500 }
-      );
-    }
-
-    console.log('[CREATE_PENDING] Success - OTP sent to', email.toLowerCase());
+    // Magic link mode removed. Only password mode is supported.
     return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Sign-in link sent to your email',
-        email,
-      }),
-      { status: 200 }
+      JSON.stringify({ error: 'Only password authentication is supported.' }),
+      { status: 400 }
     );
   } catch (error) {
     console.error('[CREATE_PENDING_ROUTE_ERROR]', error);

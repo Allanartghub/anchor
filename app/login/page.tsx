@@ -10,7 +10,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [authMode, setAuthMode] = useState<'magic' | 'password'>('magic');
+  // Only password auth mode
+  const [authMode] = useState<'password'>('password');
   const [passwordMode, setPasswordMode] = useState<'signin' | 'signup'>('signin');
   const [error, setError] = useState('');
   const [checkingSession, setCheckingSession] = useState(true);
@@ -35,9 +36,12 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      if (authMode === 'magic') {
-        const { error } = await supabase.auth.signInWithOtp({
+      // Password authentication only
+      if (passwordMode === 'signup') {
+        // Sign up
+        const { data, error } = await supabase.auth.signUp({
           email,
+          password,
           options: {
             emailRedirectTo: `${window.location.origin}/api/auth/callback`,
           },
@@ -45,50 +49,31 @@ export default function LoginPage() {
 
         if (error) {
           setError(error.message);
-        } else {
-          setMessage('Check your email for a login link!');
-          setEmail('');
+        } else if (data.user) {
+          setMessage('Account created! You can now sign in.');
+          setPasswordMode('signin');
+          setPassword('');
         }
       } else {
-        // Password authentication
-        if (passwordMode === 'signup') {
-          // Sign up
-          const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-            },
-          });
+        // Sign in
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-          if (error) {
-            setError(error.message);
-          } else if (data.user) {
-            setMessage('Account created! You can now sign in.');
-            setPasswordMode('signin');
-            setPassword('');
+        if (error) {
+          setError(error.message);
+        } else if (data.session) {
+          // Check if admin or regular user
+          const response = await fetch('/api/auth/session');
+          const sessionData = await response.json();
+          
+          if (sessionData.isAdmin) {
+            router.push('/admin');
+          } else {
+            router.push('/dashboard');
           }
-        } else {
-          // Sign in
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-
-          if (error) {
-            setError(error.message);
-          } else if (data.session) {
-            // Check if admin or regular user
-            const response = await fetch('/api/auth/session');
-            const sessionData = await response.json();
-            
-            if (sessionData.isAdmin) {
-              router.push('/admin');
-            } else {
-              router.push('/dashboard');
-            }
-            return;
-          }
+          return;
         }
       }
     } catch (err: any) {
@@ -118,58 +103,32 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Auth Mode Toggle */}
+          {/* Only password auth mode, so no toggle */}
+
           <div className="flex gap-2 mb-4">
             <button
               type="button"
-              onClick={() => setAuthMode('magic')}
-              className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition ${
-                authMode === 'magic'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              onClick={() => setPasswordMode('signin')}
+              className={`flex-1 px-3 py-2 text-xs font-medium rounded transition ${
+                passwordMode === 'signin'
+                  ? 'bg-gray-800 text-white'
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Magic Link
+              Sign In
             </button>
             <button
               type="button"
-              onClick={() => setAuthMode('password')}
-              className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition ${
-                authMode === 'password'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              onClick={() => setPasswordMode('signup')}
+              className={`flex-1 px-3 py-2 text-xs font-medium rounded transition ${
+                passwordMode === 'signup'
+                  ? 'bg-gray-800 text-white'
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Password
+              Sign Up
             </button>
           </div>
-
-          {authMode === 'password' && (
-            <div className="flex gap-2 mb-4">
-              <button
-                type="button"
-                onClick={() => setPasswordMode('signin')}
-                className={`flex-1 px-3 py-2 text-xs font-medium rounded transition ${
-                  passwordMode === 'signin'
-                    ? 'bg-gray-800 text-white'
-                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => setPasswordMode('signup')}
-                className={`flex-1 px-3 py-2 text-xs font-medium rounded transition ${
-                  passwordMode === 'signup'
-                    ? 'bg-gray-800 text-white'
-                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                Sign Up
-              </button>
-            </div>
-          )}
 
           <form onSubmit={handleSignIn} className="space-y-4">
             <div>
@@ -187,22 +146,20 @@ export default function LoginPage() {
               />
             </div>
 
-            {authMode === 'password' && (
-              <div>
-                <label className="block text-sm font-medium text-calm-text mb-2">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Your password"
-                  required
-                  className="calm-input"
-                  disabled={isLoading}
-                />
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-calm-text mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Your password"
+                required
+                className="calm-input"
+                disabled={isLoading}
+              />
+            </div>
 
             {message && (
               <div className="rounded-lg bg-calm-sage p-4 text-sm text-green-800">
@@ -223,11 +180,9 @@ export default function LoginPage() {
             >
               {isLoading 
                 ? 'Loading...' 
-                : authMode === 'magic' 
-                  ? 'Send magic link' 
-                  : passwordMode === 'signup'
-                    ? 'Create Account'
-                    : 'Sign in'
+                : passwordMode === 'signup'
+                  ? 'Create Account'
+                  : 'Sign in'
               }
             </button>
           </form>
