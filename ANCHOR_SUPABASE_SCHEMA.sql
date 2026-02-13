@@ -196,7 +196,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON load_domain_selections TO authenticated;
 -- 5. WEEKLY CHECK-IN RESPONSES (Structured Continuity)
 -- ============================================================================
 -- Captures the weekly structured check-in.
--- One check-in per week per user (soft gating—encouraged, not enforced).
+-- Multiple check-ins per week per user are allowed.
 
 CREATE TABLE IF NOT EXISTS weekly_checkin_responses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -228,8 +228,7 @@ CREATE TABLE IF NOT EXISTS weekly_checkin_responses (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Unique constraint: one check-in per user per week per year
-CREATE UNIQUE INDEX IF NOT EXISTS weekly_checkin_unique_idx ON weekly_checkin_responses(user_id, week_number, semester_year);
+-- Note: no unique constraint to allow multiple check-ins per week
 
 CREATE INDEX IF NOT EXISTS weekly_checkin_user_idx ON weekly_checkin_responses(user_id);
 CREATE INDEX IF NOT EXISTS weekly_checkin_week_idx ON weekly_checkin_responses(week_number, semester_year);

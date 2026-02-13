@@ -121,6 +121,102 @@ export interface InstitutionalAggregate {
 }
 
 // ============================================================================
+// INSTITUTIONAL BACKEND TYPES
+// ============================================================================
+
+// Institution
+export interface Institution {
+  id: string;
+  name: string;
+  country: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Admin User (mapped to auth.users via auth_uid)
+export type AdminRole = 'counsellor' | 'lead' | 'admin';
+
+export interface AdminUser {
+  id: string;
+  auth_uid: string;
+  institution_id: string;
+  role: AdminRole;
+  full_name: string;
+  email: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Extended Weekly Check-in with Risk Fields
+export interface WeeklyCheckinWithRisk extends WeeklyCheckinResponse {
+  risk_score: number;
+  high_risk: boolean;
+  trigger_reasons: Record<string, any>;
+  reviewed: boolean;
+}
+
+// Risk Event (audit log of flagged cases)
+export interface RiskEvent {
+  id: string;
+  user_id: string;
+  checkin_id: string;
+  institution_id: string;
+  risk_score: number;
+  trigger_reasons: string[]; // E.g., ["self_harm_often", "intensity_spike"]
+  reviewed: boolean;
+  reviewed_by_user_id: string | null;
+  reviewed_at: string | null;
+  review_notes: string | null;
+  is_escalated: boolean;
+  escalation_reason: string | null;
+  created_at: string;
+}
+
+// Risk Queue Item (for admin dashboard)
+export interface RiskQueueItem {
+  id: string; // risk_event.id
+  user_id: string;
+  checkin_id: string;
+  risk_score: number;
+  trigger_reasons: string[];
+  week_number: number;
+  primary_domain: MentalLoadDomainId | null;
+  intensity: LoadIntensityNumeric;
+  weeks_since_arrival: number;
+  created_at: string;
+  reviewed: boolean;
+}
+
+// Strategic Insight
+export interface StrategicInsight {
+  id: string;
+  institution_id: string;
+  week_number: number;
+  semester_year: number;
+  top_domain: MentalLoadDomainId | null;
+  top_domain_count: number;
+  weekly_spike_percent: number;
+  spike_description: string;
+  repeated_spike_domains: MentalLoadDomainId[];
+  risk_event_count: number;
+  high_intensity_pct: number;
+  recommendation_hint: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Cohort Trend Snapshot
+export interface CohortTrendSnapshot {
+  week_number: number;
+  domain_id: MentalLoadDomainId;
+  avg_intensity: number;
+  sample_size: number;
+  high_risk_count: number;
+  intensity_delta: number | null; // WoW change
+}
+
+// ============================================================================
 // EXISTING TYPES (Kept for backward compatibility)
 // ============================================================================
 // Mood entry (HIDDEN IN PRIMARY UI - kept for optional snapshot view only)

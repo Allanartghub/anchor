@@ -24,6 +24,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadEntries, setLoadEntries] = useState<LoadEntry[]>([]);
   const [weeklyCheckins, setWeeklyCheckins] = useState<WeeklyCheckinResponse[]>([]);
+  const [activeSupportCases, setActiveSupportCases] = useState(0);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -40,14 +41,14 @@ export default function DashboardPage() {
         return;
       }
 
-      await fetchUserData(session.user.id);
+      await fetchUserData(session.user.id, session.access_token);
       setIsLoading(false);
     };
 
     checkAuth();
   }, [router]);
 
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = async (userId: string, sessionToken: string) => {
     try {
       const { data: entries, error: entriesError } = await supabase
         .from('load_entries')
@@ -68,6 +69,18 @@ export default function DashboardPage() {
 
       if (checkinsError) throw checkinsError;
       setWeeklyCheckins(checkins || []);
+
+      // Fetch active support cases via API
+      const response = await fetch('/api/student/support-cases', {
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const { cases } = await response.json();
+        setActiveSupportCases(cases?.length || 0);
+      }
     } catch (err) {
       console.error('Error fetching user data:', err);
       setError('Failed to load your data');
@@ -100,6 +113,25 @@ export default function DashboardPage() {
               <strong>For international postgraduate students in their first 12 months in Ireland.</strong>
             </p>
           </div>
+
+          {activeSupportCases > 0 && (
+            <div className="bg-green-50 border border-green-300 rounded-lg p-4 mb-12 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-green-900">
+                  💬 You have {activeSupportCases} active support conversation{activeSupportCases === 1 ? '' : 's'}
+                </p>
+                <p className="text-xs text-green-800 mt-1">
+                  The wellbeing team is here to help. Check your messages for updates.
+                </p>
+              </div>
+              <button
+                onClick={() => router.push('/support-messages')}
+                className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition whitespace-nowrap ml-4"
+              >
+                View Messages →
+              </button>
+            </div>
+          )}
 
           <div className="bg-white rounded-lg border border-gray-200 p-8 mb-12 shadow-sm hover:shadow-md transition">
             <div className="flex items-start justify-between">

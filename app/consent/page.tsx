@@ -24,6 +24,26 @@ export default function ConsentPage() {
 
       setUserId(session.user.id);
 
+      // Check if user is an admin - if so, redirect to admin dashboard
+      try {
+        const sessionResponse = await fetch('/api/auth/session', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+        
+        if (sessionResponse.ok) {
+          const sessionData = await sessionResponse.json();
+          if (sessionData.isAdmin) {
+            console.log('[CONSENT] User is admin, redirecting to /admin');
+            router.push('/admin');
+            return;
+          }
+        }
+      } catch (err) {
+        console.log('[CONSENT] Could not check admin status:', err);
+      }
+
       // Check if user has already accepted
       const hasConsented = await checkConsents(session.user.id);
       if (hasConsented) {

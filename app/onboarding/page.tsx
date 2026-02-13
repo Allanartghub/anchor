@@ -66,10 +66,12 @@ export default function OnboardingPage() {
     setError('');
 
     try {
+      const nciInstitutionId = '550e8400-e29b-41d4-a716-446655440000';
       const payload: Partial<UsersExtended> = {
         user_id: userId,
         semester_start: semesterStart as any,
         semester_position: semesterPosition as any,
+        institution_id: nciInstitutionId,
       };
 
       const { error: insertError } = await supabase

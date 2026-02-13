@@ -31,7 +31,7 @@ function getIntensityColor(intensity: 'Light' | 'Moderate' | 'Heavy'): string {
 
 export default function WeeklyHistoryCard({ summary }: WeeklyHistoryCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const totalEntries = (summary.checkIn ? 1 : 0) + summary.adHocEntries.length;
+  const totalEntries = summary.checkIns.length + summary.adHocEntries.length;
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4 hover:shadow-md transition-shadow">
@@ -104,6 +104,29 @@ export default function WeeklyHistoryCard({ summary }: WeeklyHistoryCardProps) {
               </div>
               <p className="text-sm text-gray-800">{summary.checkIn.response_text}</p>
             </div>
+          )}
+
+          {summary.checkIns.length > 1 && (
+            <details className="bg-white border border-gray-200 rounded-lg p-4">
+              <summary className="text-sm font-semibold text-gray-700 cursor-pointer">
+                View all weekly check-ins ({summary.checkIns.length})
+              </summary>
+              <div className="mt-3 space-y-3">
+                {summary.checkIns.map((checkIn) => (
+                  <div key={checkIn.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <div className="flex items-baseline gap-2 mb-2">
+                      <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded">
+                        Weekly Check-In
+                      </span>
+                      <span className="text-xs text-gray-600">
+                        {new Date(checkIn.completed_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-800">{checkIn.response_text}</p>
+                  </div>
+                ))}
+              </div>
+            </details>
           )}
 
           {/* Ad-Hoc Load Entries */}

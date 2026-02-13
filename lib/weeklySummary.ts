@@ -4,6 +4,7 @@ export interface WeeklySummary {
   weekNumber: number;
   semesterYear: number;
   checkIn: WeeklyCheckinResponse | null;
+  checkIns: WeeklyCheckinResponse[];
   adHocEntries: LoadEntry[];
   dominantDomains: string[];
   overallIntensity: 'Light' | 'Moderate' | 'Heavy';
@@ -151,18 +152,23 @@ export function generateWeeklySummaries(
   // Process check-ins
   checkIns.forEach((checkIn) => {
     const key = `${checkIn.semester_year}-W${checkIn.week_number}`;
-    weekMap[key] = {
-      weekNumber: checkIn.week_number,
-      semesterYear: checkIn.semester_year,
-      checkIn,
-      adHocEntries: [],
-      dominantDomains: [],
-      overallIntensity: 'Light',
-      isHeavy: false,
-      requiresAttention: false,
-      reflection: '',
-      optionalPrompt: null,
-    };
+    if (!weekMap[key]) {
+      weekMap[key] = {
+        weekNumber: checkIn.week_number,
+        semesterYear: checkIn.semester_year,
+        checkIn: null,
+        checkIns: [],
+        adHocEntries: [],
+        dominantDomains: [],
+        overallIntensity: 'Light',
+        isHeavy: false,
+        requiresAttention: false,
+        reflection: '',
+        optionalPrompt: null,
+      };
+    }
+
+    weekMap[key].checkIns.push(checkIn);
   });
 
   // Process ad-hoc entries
@@ -173,6 +179,7 @@ export function generateWeeklySummaries(
         weekNumber: entry.week_number,
         semesterYear: entry.semester_year,
         checkIn: null,
+        checkIns: [],
         adHocEntries: [],
         dominantDomains: [],
         overallIntensity: 'Light',
@@ -187,6 +194,12 @@ export function generateWeeklySummaries(
 
   // Calculate summaries
   const summaries = Object.values(weekMap).map((summary) => {
+    if (summary.checkIns.length > 0) {
+      summary.checkIns.sort((a, b) => {
+        return new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime();
+      });
+      summary.checkIn = summary.checkIns[0];
+    }
     summary.overallIntensity = determineOverallIntensity(summary.checkIn, summary.adHocEntries);
     summary.dominantDomains = extractDominantDomains(summary.checkIn, summary.adHocEntries);
     summary.isHeavy = summary.overallIntensity === 'Heavy';

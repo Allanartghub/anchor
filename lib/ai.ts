@@ -93,52 +93,81 @@ async function tryHuggingFaceRouter(userMessage: string): Promise<AIResponse> {
 
     // 12s timeout per attempt (fail fast for demos)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let aborted = false;
 
-    let res: Response;
+    let res: Response | undefined;
     let rawText = "";
 
     try {
-      res = await fetch(HF_ROUTER_CHAT_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${HF_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: ANCHOR_SYSTEM_PROMPT },
-            { role: "user", content: userMessage },
-          ],
-          temperature: 0.7,
-          max_tokens: 160,
-        }),
-        signal: controller.signal,
-      });
+      // Set timeout - but make sure we handle the abort gracefully
+      timeoutId = setTimeout(() => {
+        aborted = true;
+        controller.abort();
+      }, 12000);
 
-      rawText = await res.text().catch(() => "");
+      try {
+        res = await fetch(HF_ROUTER_CHAT_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${HF_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: ANCHOR_SYSTEM_PROMPT },
+              { role: "user", content: userMessage },
+            ],
+            temperature: 0.7,
+            max_tokens: 160,
+          }),
+          signal: controller.signal,
+        });
+
+        // If we got a response after timeout was set, check if we were aborted
+        if (aborted) {
+          continue;
+        }
+
+        rawText = await res.text().catch(() => "");
+      } catch (fetchErr) {
+        // Specifically handle AbortError without logging or re-throwing
+        if (fetchErr instanceof Error && (fetchErr.name === 'AbortError' || fetchErr.message.includes('aborted'))) {
+          // Silent continue - timeout occurred, try next model
+          continue;
+        }
+        // Other errors should be re-thrown to be caught by outer catch
+        throw fetchErr;
+      }
     } catch (err) {
-      const emsg = err instanceof Error ? err.message : String(err);
-      console.warn(`[HF Router] Request error for ${model}:`, emsg);
-      clearTimeout(timeoutId);
+      // Catch any non-AbortError exceptions
+      if (err instanceof Error) {
+        console.warn(`[HF Router] Error for ${model}:`, err.message);
+      } else {
+        console.warn(`[HF Router] Error for ${model}:`, String(err));
+      }
       continue;
     } finally {
-      clearTimeout(timeoutId);
+      // Always clear timeout
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
 
-    if (!res.ok) {
+    // Check if response is valid
+    if (!res || !res.ok) {
       console.error(
-        `[HF Router] ❌ ${model} responded ${res.status}: ${rawText.substring(0, 250)}`
+        `[HF Router] ❌ ${model} responded ${res?.status}: ${rawText.substring(0, 250)}`
       );
 
       // Common "try next" statuses: auth, access, rate limit, model loading/unavailable
-      if ([400, 401, 403, 404, 429, 503].includes(res.status)) {
+      if (res && [400, 401, 403, 404, 429, 503].includes(res.status)) {
         console.warn(`[HF Router] ⚠️ Model ${model} unavailable (${res.status}). Trying next...`);
         continue;
       }
 
-      throw new Error(`Hugging Face Router error ${res.status}`);
+      throw new Error(`Hugging Face Router error ${res?.status || 'unknown'}`);
     }
 
     // Parse OpenAI-compatible response

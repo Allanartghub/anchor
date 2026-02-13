@@ -47,29 +47,57 @@ export async function sendChatMessage(
   const token = session.access_token;
 
   // Step 2: Call /api/chat with Bearer token
-  const response = await fetch('/api/chat', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    // Create abort controller with 35-second timeout (server has 30s)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 35000);
 
-  // Step 3: Handle response
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`[ChatClient] API error (${response.status}):`, errorText);
-    throw new Error(
-      `Chat API error (${response.status}): ${errorText || 'Unknown error'}`
-    );
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      // Step 3: Handle response
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[ChatClient] API error (${response.status}):`, errorText);
+        throw new Error(
+          `Chat API error (${response.status}): ${errorText || 'Unknown error'}`
+        );
+      }
+
+      const data: ChatResponse = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to process message');
+      }
+
+      return data;
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      
+      // Silently handle AbortError - it's an expected timeout
+      if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
+        console.log('[ChatClient] Request timeout after 35s');
+        throw new Error('Request took too long. Please try again.');
+      }
+      
+      // Re-throw other errors
+      throw fetchErr;
+    }
+  } catch (error) {
+    // Already handled in the inner catch
+    if (error instanceof Error && error.message.includes('Request took too long')) {
+      throw error;
+    }
+    throw error;
   }
-
-  const data: ChatResponse = await response.json();
-
-  if (!data.success) {
-    throw new Error(data.error || 'Failed to process message');
-  }
-
-  return data;
 }
