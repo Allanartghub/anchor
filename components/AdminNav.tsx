@@ -49,7 +49,7 @@ export default function AdminNav({ current }: AdminNavProps) {
           )}
           <button
           onClick={async () => {
-            await fetch('/api/auth/logout', { method: 'POST' });
+            await supabase.auth.signOut();
             router.push('/login');
           }}
           className="text-sm text-slate-500 hover:text-slate-900"
