@@ -13,7 +13,7 @@
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { supabase, getSession } from '../../../lib/supabase';
+import { supabase, getSession } from '@/lib/supabase';
 
 interface SupportCase {
   id: string;
@@ -132,6 +132,7 @@ export default function AdminCaseDetailPage() {
           filter: `case_id=eq.${caseId}`,
         },
         (payload) => {
+        (payload: any) => {
           setMessages((prev) => {
             // Prevent duplicate messages
             if (prev.some(msg => msg.id === payload.new.id)) {
@@ -139,6 +140,7 @@ export default function AdminCaseDetailPage() {
             }
             return [...prev, payload.new as Message];
           });
+        }
         }
       )
       .subscribe();
