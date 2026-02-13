@@ -3,10 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 import { callSereneAI, checkForRiskTriggers, getIrelandCrisisResources, generateSessionTitle } from '@/lib/ai';
 import { getMicroSuggestion, getOfflineMessage } from '@/lib/microSuggestions';
 
-// Create server-side Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+function getSupabaseConfig() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase credentials');
+  }
+  return { supabaseUrl, supabaseKey };
+}
 
 // POST /api/chat
 // Send a message to Anchor and get a response
@@ -33,6 +37,8 @@ export async function POST(request: NextRequest) {
 async function handleChatRequest(request: NextRequest) {
   try {
     console.log('[Chat API Handler] Starting...');
+    const { supabaseUrl, supabaseKey } = getSupabaseConfig();
+    const supabase = createClient(supabaseUrl, supabaseKey);
     const { message, domainContext, session_id } = await request.json();
     console.log('[Chat API Handler] Received message:', message.substring(0, 50));
     console.log('[Chat API Handler] Session ID from client:', session_id || 'none');
