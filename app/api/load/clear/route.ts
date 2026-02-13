@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+function getSupabaseConfig() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase credentials');
+  }
+  return { supabaseUrl, supabaseKey };
+}
 
 // POST /api/load/clear
 // Delete all load entries for the authenticated user
 export async function POST(request: NextRequest) {
   try {
+    const { supabaseUrl, supabaseKey } = getSupabaseConfig();
+    const supabase = createClient(supabaseUrl, supabaseKey);
     const authToken = request.headers.get('authorization')?.replace('Bearer ', '');
     if (!authToken) {
       console.error('[Load Clear] No auth token');
