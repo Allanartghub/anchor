@@ -18,6 +18,18 @@ export async function getSession() {
 
 // Helper to get current user
 export async function getCurrentUser() {
+  // Utility to fetch with authentication
+  export async function fetchWithAuth(url, options = {}) {
+    const session = await getSession();
+    if (!session?.access_token) {
+      return { error: 'User not authenticated' };
+    }
+    const headers = {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${session.access_token}`,
+    };
+    return fetch(url, { ...options, headers });
+  }
   try {
     const { data: { user } } = await supabase.auth.getUser();
     return user;

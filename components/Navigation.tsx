@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
+import { getSession } from '../lib/supabase';
 
 interface NavigationProps {
   currentPage: 'dashboard' | 'timeline' | 'settings' | 'history' | 'messages';
@@ -12,15 +13,7 @@ export default function Navigation({ currentPage }: NavigationProps) {
   const [hasActiveCases, setHasActiveCases] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Memoize supabase client
-  const supabase = useMemo(
-    () =>
-      createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      ),
-    []
-  );
+  // Use getSession() for session checks
 
   useEffect(() => {
     const checkActiveCases = async () => {

@@ -115,7 +115,10 @@ export async function POST(req: NextRequest) {
 
     if (msgError) {
       console.error('[SEND_MESSAGE] Insert error:', msgError);
-      throw msgError;
+      return NextResponse.json(
+        { error: 'Failed to send message', details: msgError.message || msgError },
+        { status: 500 }
+      );
     }
 
     // Log audit entry

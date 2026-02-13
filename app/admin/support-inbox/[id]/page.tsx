@@ -13,7 +13,7 @@
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { supabase, getSession } from '../../../lib/supabase';
 
 interface SupportCase {
   id: string;
@@ -50,13 +50,7 @@ export default function AdminCaseDetailPage() {
   const [adminId, setAdminId] = useState<string | null>(null);
 
   // Memoize supabase client to prevent unnecessary re-creates
-  const supabase = useMemo(
-    () => createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    ),
-    []
-  );
+  // Use shared supabase client from lib
 
   useEffect(() => {
     if (!caseId) return;
