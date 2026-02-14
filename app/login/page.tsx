@@ -113,7 +113,7 @@ export default function LoginPage() {
                 setResetLoading(true);
                 try {
                   const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-                    redirectTo: `${window.location.origin}/reset-password`,
+                    redirectTo: 'https://anchor-pied-beta.vercel.app/reset-password',
                   });
                   if (error) {
                     setResetError(error.message);
